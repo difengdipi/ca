@@ -1,0 +1,20 @@
+{
+    "id": 3,
+    "role_id": 2,
+    "role": {
+        "id": 2,
+        "created_at": null,
+        "role_name": "顾客",
+        "description": null
+    },
+    "username": "luwei",
+    "password": "pbkdf2_sha256$720000$QjNMoyOKbcqrdfPk6ltxIZ$paQpZQieBWcUvXvtJa08N/8uUdwYXVGPo/NOfJhvTm8=",
+    "student_id": "20212387056",
+    "name": "陆威",
+    "gender": "男",
+    "avatar": "/media/avatars/3.jpeg",
+    "phone": "17351744118",
+    "email": "1111111@qq.com",
+    "dept": "学校",
+    "notes": "null"
+}
