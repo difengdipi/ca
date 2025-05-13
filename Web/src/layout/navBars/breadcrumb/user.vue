@@ -1,0 +1,316 @@
+<template>
+	<div class="layout-navbars-breadcrumb-user pr15" :style="{ flex: layoutUserFlexNum }">
+		<!--    <div v-if="userInfos.role=='顾客'" class="" style="margin-right: 30px" @click="tiaozhan"><el-button type="text">{{ route.meta.isReception?'后台管理':'主页' }}</el-button></div>-->
+		<SkipButton :userInfos="userInfos" :route="route" />
+
+		<div>
+			<!-- <span v-if="!isSocketOpen">
+				<el-popconfirm width="250" ref="onlinePopoverRef" :confirm-button-text="$t('message.user.retry')"
+					:icon="InfoFilled" trigger="hover" icon-color="#626AEF" :title="$t('message.user.onlinePrompt')"
+					@confirm="onlineConfirmEvent">
+					<template #reference>
+						<el-badge is-dot class="item"
+							:class="{ 'online-status': isSocketOpen, 'online-down': !isSocketOpen }">
+							<img :src="userInfos.avatar || headerImage"
+								class="layout-navbars-breadcrumb-user-link-photo mr5" />
+						</el-badge>
+					</template>
+				</el-popconfirm>
+			</span> -->
+			<img :src="baseurl + userInfos.avatar || headerImage" class="layout-navbars-breadcrumb-user-link-photo mr5" />
+		</div>
+		<el-dropdown :show-timeout="70" :hide-timeout="50" @command="onHandleCommandClick">
+			<span class="layout-navbars-breadcrumb-user-link">
+				<span v-if="isSocketOpen">
+					<el-badge is-dot class="item" :class="{ 'online-status': isSocketOpen, 'online-down': !isSocketOpen }">
+						<img :src="userInfos.avatar || headerImage" class="layout-navbars-breadcrumb-user-link-photo mr5" />
+					</el-badge>
+				</span>
+				{{ userInfos.username === '' ? 'common' : userInfos.username }}
+				<el-icon class="el-icon--right">
+					<ele-ArrowDown />
+				</el-icon>
+			</span>
+			<template #dropdown>
+				<el-dropdown-menu>
+					<el-dropdown-item command="/home">{{ $t('message.user.dropdown1') }}</el-dropdown-item>
+					<el-dropdown-item command="/personal">{{ $t('message.user.dropdown2') }}</el-dropdown-item>
+					<el-dropdown-item divided command="logOut">{{ $t('message.user.dropdown5') }}</el-dropdown-item>
+					<!-- <el-dropdown-item command="/login">{{ $t('message.user.dropdown5') }}</el-dropdown-item> -->
+				</el-dropdown-menu>
+			</template>
+		</el-dropdown>
+		<Search ref="searchRef" />
+	</div>
+</template>
+
+<script setup lang="ts" name="layoutBreadcrumbUser">
+import { defineAsyncComponent, ref, computed, reactive, onMounted, unref, watch } from 'vue';
+import Cookies from 'js-cookie';
+import { useRouter, useRoute } from 'vue-router';
+import { ElMessageBox, ElMessage } from 'element-plus';
+import screenfull from 'screenfull';
+import { useI18n } from 'vue-i18n';
+import { storeToRefs } from 'pinia';
+import { useRoutesList } from '/@/stores/routesList';
+import { useUserInfo } from '/@/stores/userInfo';
+import { useThemeConfig } from '/@/stores/themeConfig';
+import other from '/@/utils/other';
+import mittBus from '/@/utils/mitt';
+import { Session, Local } from '/@/utils/storage';
+import headerImage from '/@/assets/img/headerImage.png';
+import websocket from '/@/utils/websocket';
+import { InfoFilled } from '@element-plus/icons-vue';
+import pinia from '/@/stores/index';
+// 引入组件
+import SkipButton from './SkipButton.vue';
+const UserNews = defineAsyncComponent(() => import('/@/layout/navBars/breadcrumb/userNews.vue'));
+const Search = defineAsyncComponent(() => import('/@/layout/navBars/breadcrumb/search.vue'));
+
+// 定义变量内容
+const { locale, t } = useI18n();
+const router = useRouter();
+const route = useRoute();
+const stores = useUserInfo();
+const storesThemeConfig = useThemeConfig();
+// const { userInfos } = storeToRefs(stores);
+const { themeConfig } = storeToRefs(storesThemeConfig);
+const searchRef = ref();
+const userInfos = ref({});
+const state = reactive({
+	isScreenfull: false,
+	disabledI18n: 'en',
+	disabledSize: 'large',
+});
+const baseurl = '/api/';
+
+// 设置分割样式
+const layoutUserFlexNum = computed(() => {
+	let num: string | number = '';
+	const { layout, isClassicSplitMenu } = themeConfig.value;
+	const layoutArr: string[] = ['defaults', 'columns'];
+	if (layoutArr.includes(layout) || (layout === 'classic' && !isClassicSplitMenu)) num = '1';
+	else num = '';
+	return num;
+});
+
+// 定义变量内容
+const { isSocketOpen } = storeToRefs(useUserInfo());
+
+// websocket状态
+const onlinePopoverRef = ref();
+const onlineConfirmEvent = () => {
+	if (!isSocketOpen.value) {
+		websocket.is_reonnect = true;
+		websocket.reconnect_current = 1;
+		websocket.reconnect();
+	}
+	// 手动隐藏弹出
+	unref(onlinePopoverRef).popperRef?.delayHide?.();
+};
+// 全屏点击时
+const onScreenfullClick = () => {
+	if (!screenfull.isEnabled) {
+		ElMessage.warning('暂不不支持全屏');
+		return false;
+	}
+	screenfull.toggle();
+	screenfull.on('change', () => {
+		if (screenfull.isFullscreen) state.isScreenfull = true;
+		else state.isScreenfull = false;
+	});
+};
+// 布局配置 icon 点击时
+const onLayoutSetingClick = () => {
+	mittBus.emit('openSetingsDrawer');
+};
+// 下拉菜单点击时
+
+const onHandleCommandClick = (path: string) => {
+	if (path === 'logOut') {
+		ElMessageBox({
+			closeOnClickModal: false,
+			closeOnPressEscape: false,
+			title: t('message.user.logOutTitle'),
+			message: t('message.user.logOutMessage'),
+			showCancelButton: true,
+			confirmButtonText: t('message.user.logOutConfirm'),
+			cancelButtonText: t('message.user.logOutCancel'),
+			buttonSize: 'default',
+			beforeClose: (action, instance, done) => {
+				if (action === 'confirm') {
+					instance.confirmButtonLoading = true;
+					instance.confirmButtonText = t('message.user.logOutExit');
+					setTimeout(() => {
+						done();
+						setTimeout(() => {
+							instance.confirmButtonLoading = false;
+						}, 300);
+					}, 700);
+				} else {
+					done();
+				}
+			},
+		})
+			.then(async () => {
+				//退出登录清空路由
+
+				const storesRoutesList = useRoutesList(pinia); //路由内容
+				console.log('退出登录', storesRoutesList);
+				storesRoutesList.setRoutesList([]); //清空路由
+				//退出登录清空路由 end
+				// 清除缓存/token等
+				Session.clear();
+				// 获取所有cookies的名称
+				const allCookies = Cookies.get();
+
+				// 遍历并删除所有cookies
+				for (const cookieName in allCookies) {
+					Cookies.remove(cookieName);
+				}
+
+				router.push('/login');
+				ElMessage({
+					message: '退出成功!',
+					type: 'success',
+				});
+			})
+			.catch(() => {});
+	} else if (path === 'wareHouse') {
+		window.open('https://gitee.com/huge-dream/django-vue3-admin');
+	} else {
+		router.push(path);
+	}
+};
+// 菜单搜索点击
+const onSearchClick = () => {
+	searchRef.value.openSearch();
+};
+// 组件大小改变
+const onComponentSizeChange = (size: string) => {
+	Local.remove('themeConfig');
+	themeConfig.value.globalComponentSize = size;
+	Local.set('themeConfig', themeConfig.value);
+	initI18nOrSize('globalComponentSize', 'disabledSize');
+	window.location.reload();
+};
+// 语言切换
+const onLanguageChange = (lang: string) => {
+	Local.remove('themeConfig');
+	themeConfig.value.globalI18n = lang;
+	Local.set('themeConfig', themeConfig.value);
+	locale.value = lang;
+	other.useTitle();
+	initI18nOrSize('globalI18n', 'disabledI18n');
+};
+// 初始化组件大小/i18n
+const initI18nOrSize = (value: string, attr: string) => {
+	state[attr] = Local.get('themeConfig')[value];
+};
+// 页面加载时
+onMounted(() => {
+	if (Local.get('themeConfig')) {
+		initI18nOrSize('globalComponentSize', 'disabledSize');
+		initI18nOrSize('globalI18n', 'disabledI18n');
+	}
+	if (Cookies.get('user')) {
+		const user = JSON.parse(Cookies.get('user'));
+		userInfos.value = user;
+		console.log(user);
+	}
+});
+const tiaozhan = () => {
+	if (route.meta.isReception) {
+		router.push('/home');
+	} else {
+		router.push('/main');
+	}
+};
+
+//消息中心的未读数量
+import { messageCenterStore } from '/@/stores/messageCenter';
+const messageCenter = messageCenterStore();
+</script>
+
+<style scoped lang="scss">
+.layout-navbars-breadcrumb-user {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+
+	&-link {
+		height: 100%;
+		display: flex;
+		align-items: center;
+		white-space: nowrap;
+
+		&-photo {
+			width: 25px;
+			height: 25px;
+			border-radius: 100%;
+		}
+	}
+
+	&-icon {
+		padding: 0 10px;
+		cursor: pointer;
+		color: var(--next-bg-topBarColor);
+		height: 50px;
+		line-height: 50px;
+		display: flex;
+		align-items: center;
+
+		&:hover {
+			background: var(--next-color-user-hover);
+
+			i {
+				display: inline-block;
+				animation: logoAnimation 0.3s ease-in-out;
+			}
+		}
+	}
+
+	:deep(.el-dropdown) {
+		color: var(--next-bg-topBarColor);
+	}
+
+	:deep(.el-badge) {
+		height: 40px;
+		line-height: 40px;
+		display: flex;
+		align-items: center;
+	}
+
+	:deep(.el-badge__content.is-fixed) {
+		top: 12px;
+	}
+
+	.online-status {
+		cursor: pointer;
+
+		:deep(.el-badge__content.is-fixed) {
+			top: 30px;
+			font-size: 14px;
+			left: 5px;
+			height: 12px;
+			width: 12px;
+			padding: 0;
+			background-color: #18bc9c;
+		}
+	}
+
+	.online-down {
+		cursor: pointer;
+
+		:deep(.el-badge__content.is-fixed) {
+			top: 30px;
+			font-size: 14px;
+			left: 5px;
+			height: 12px;
+			width: 12px;
+			padding: 0;
+			background-color: #979b9c;
+		}
+	}
+}
+</style>
