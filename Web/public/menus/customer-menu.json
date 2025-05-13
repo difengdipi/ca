@@ -1,0 +1,88 @@
+
+{
+"data": [
+
+
+                {
+                    "id": 1,
+                    "parent": null,
+                    "icon": "iconfont icon-caidan",
+                    "sort": 1,
+                    "path": "/dish_like",
+                    "name": "菜品点赞管理",
+                    "title": "菜品点赞管理",
+                    "is_link": false,
+                    "link_url": null,
+                    "is_catalog": false,
+                    "web_path": "/dish_like",
+                    "component": "back/customer/dish/like/index",
+                    "component_name": "dish_like",
+                    "cache": false,
+                    "visible": true,
+                    "is_iframe": false,
+                    "is_affix": false,
+                    "status": true
+                }
+                ,{
+                    "id": 1,
+                    "parent": null,
+                    "icon": "iconfont icon-caidan",
+                    "sort": 1,
+                    "path": "/dish_favorite",
+                    "name": "菜品收藏管理",
+                    "title": "菜品收藏管理",
+                    "is_link": false,
+                    "link_url": null,
+                    "is_catalog": false,
+                    "web_path": "/dish_favorite",
+                    "component": "back/customer/dish/favorite/index",
+                    "component_name": "dish_favorite",
+                    "cache": false,
+                    "visible": true,
+                    "is_iframe": false,
+                    "is_affix": false,
+                    "status": true
+                }
+                ,{
+                    "id": 1,
+                    "parent": null,
+                    "icon": "iconfont icon-caidan",
+                    "sort": 1,
+                    "path": "/dish_comment",
+                    "name": "菜品评论管理",
+                    "title": "菜品评论管理",
+                    "is_link": false,
+                    "link_url": null,
+                    "is_catalog": false,
+                    "web_path": "/dish_comment",
+                    "component": "back/customer/dish/comment/index",
+                    "component_name": "dish_comment",
+                    "cache": false,
+                    "visible": true,
+                    "is_iframe": false,
+                    "is_affix": false,
+                    "status": true
+                }
+                ,{
+                    "id": 1,
+                    "parent": null,
+                    "icon": "iconfont icon-caidan",
+                    "sort": 1,
+                    "path": "/dish_order",
+                    "name": "菜品订单管理",
+                    "title": "菜品订单管理",
+                    "is_link": false,
+                    "link_url": null,
+                    "is_catalog": false,
+                    "web_path": "/dish_order",
+                    "component": "back/customer/dish/order/index",
+                    "component_name": "dish_order",
+                    "cache": false,
+                    "visible": true,
+                    "is_iframe": false,
+                    "is_affix": false,
+                    "status": true
+                }
+
+     ]
+}
